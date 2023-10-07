@@ -6,4 +6,5 @@ from django.views.generic import View
 
 class IndexView(View):
     def get(self, request, *args, **kwargs):
-        return render(request, 'app/index.html')
+        list = ['a','b','c','d','e']
+        return render(request, 'app/index.html', {'list':list})
