@@ -6,3 +6,5 @@ typing_extensions==4.8.0
 channels
 channels-redis
 daphne
+typing-extensions
+sqlparse
