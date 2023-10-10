@@ -40,5 +40,10 @@ DjangoやAPIを使うとき、key(秘密の鍵)と言うものが必要になっ
 ```
 python manage.py runserver
 ```
+
+```
+asgiでの立ち上げの場合
+daphne -b 0.0.0.0 -p 8000 Vol10_2023.asgi:application
+```
 以下の画面になればひとまず大丈夫
 ![img.png](img.png)
