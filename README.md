@@ -39,7 +39,7 @@ DjangoやAPIを使うとき、key(秘密の鍵)と言うものが必要になっ
 
 #### ⑤スーパーユーザー作成
 ```
-pipenv run python3 manage.py createsuperuser --noinput --username superuser
+python manage.py createsuperuser --noinput --username superuser
 ```
 
 #### ⑥以下のコマンドでサーバーを動かす
