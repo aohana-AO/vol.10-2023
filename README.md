@@ -36,7 +36,13 @@ DjangoやAPIを使うとき、key(秘密の鍵)と言うものが必要になっ
 ↓
 チームから共有されたkeyをその中に貼り付け。
 
-#### ⑤以下のコマンドでサーバーを動かす
+
+#### ⑤スーパーユーザー作成
+```
+pipenv run python3 manage.py createsuperuser --noinput --username superuser
+```
+
+#### ⑥以下のコマンドでサーバーを動かす
 ```
 python manage.py runserver
 ```
@@ -45,5 +51,8 @@ python manage.py runserver
 asgiでの立ち上げの場合
 daphne -b 0.0.0.0 -p 8000 Vol10_2023.asgi:application
 ```
-以下の画面になればひとまず大丈夫
-![img.png](img.png)
+
+
+#### ⑦ローカルアクセス
+以下にアクセス
+http://127.0.0.1:8000/

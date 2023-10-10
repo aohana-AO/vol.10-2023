@@ -7,5 +7,8 @@ class Index(TemplateView):
 class LoginPage(LoginView):
     template_name = 'accounts/login.html'
 
+class ProfilePage(TemplateView):
+    template_name = 'accounts/profile.html'
+
 class LogoutPage(LogoutView):
     template_name = 'accounts/index.html'
