@@ -3,3 +3,8 @@ Django==4.2.5
 django-environ==0.11.2
 sqlparse==0.4.4
 typing_extensions==4.8.0
+channels
+channels-redis
+daphne
+typing-extensions
+sqlparse

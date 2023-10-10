@@ -21,5 +21,8 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('app.urls')),
+    #path('', include('app.urls')),
+    path('', include('accounts.urls', namespace='accounts')),
+    # chatアプリを追加
+    path('chat/', include('chat.urls', namespace='chat')),
 ]
