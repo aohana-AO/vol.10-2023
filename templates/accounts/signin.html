@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Sign up</h1>
+<section>
+    <form method='post'>
+        {% csrf_token %}
+        {{ form.as_p }}<!-- 汎用ビューで用意した項目をフォームとして表示 -->
+        <button type='submit'>サインアップ</button>
+    </form>
+</section>
+{% endblock %}
