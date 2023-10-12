@@ -9,7 +9,6 @@ class Index(TemplateView):
 
 class LoginPage(LoginView):
     template_name = 'accounts/login.html'
-    success_url = reverse_lazy('accounts/index.html')
 
 class SignInPage(generic.CreateView):
     form_class = UserCreationForm
