@@ -47,8 +47,8 @@ python manage.py createsuperuser --noinput --username superuser
 python manage.py runserver
 ```
 
-```
 asgiでの立ち上げの場合
+```
 daphne -b 0.0.0.0 -p 8000 Vol10_2023.asgi:application
 ```
 
