@@ -42,6 +42,7 @@ class Room(models.Model):
     host = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(gettext_lazy('Room name'), max_length=64)
     created_at = models.DateTimeField(gettext_lazy('Created time'), default=timezone.now)
+    participants = models.ManyToManyField(User, related_name='rooms', verbose_name=gettext_lazy('Participants'), blank=True)
     ai_Tag = models.ManyToManyField(ai_Tag, related_name='rooms', verbose_name=gettext_lazy('ai_Tag'))
 
     # RoomQuerysetを使用してカスタムクエリを実行できるようにします
@@ -62,6 +63,15 @@ class Room(models.Model):
     def is_host(self, user=None):
         # 指定されたユーザーがルームのホストであるかどうかを判定します
         return user is not None and self.host.pk == user.pk
+
+    def is_assigned(self, user=None):
+        try:
+            _ = self.participants.all().get(pk=user.pk)
+            return True
+        except User.DoesNotExist:
+            return self.host == user
+        except Exception:
+            return False
 
 
 # MessageManagerはMessageモデルのカスタムマネージャです
