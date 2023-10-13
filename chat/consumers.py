@@ -14,7 +14,7 @@ class _BaseConsumer(AsyncJsonWebsocketConsumer):
         super().__init__(*args, **kwargs)
 
     def get_current_time(self):
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     def get_client_key(self, user):
         return f"user{user.pk}"
@@ -28,6 +28,7 @@ class _BaseConsumer(AsyncJsonWebsocketConsumer):
     async def post_disconnect(self, user):
         raise NotImplementedError
 
+    # WebSocket接続時の処理
     async def connect(self):
         try:
             user = self.scope["user"]
@@ -44,6 +45,7 @@ class _BaseConsumer(AsyncJsonWebsocketConsumer):
         except Exception as err:
             raise Exception(err)
 
+    # WebSocket切断時の処理
     async def disconnect(self, close_code):
         user = self.scope["user"]
         await self.pre_disconnect(user)
@@ -55,14 +57,14 @@ class _BaseConsumer(AsyncJsonWebsocketConsumer):
 # global instance for chat
 g_chat_clients = {}
 
-
+# ChatConsumerクラス: チャット用のWebSocketコンシューマー
 class ChatConsumer(_BaseConsumer):
     def __init__(self, *args, **kwargs):
         kwargs["prefix"] = "chat-room"
         super().__init__(*args, **kwargs)
 
     async def post_accept(self, user):
-        # Send message to group
+        # チャットルームへの参加メッセージを送信
         await self.channel_layer.group_send(
             self.group_name,
             {
@@ -74,7 +76,7 @@ class ChatConsumer(_BaseConsumer):
         )
 
     async def pre_disconnect(self, user):
-        # Send message to group
+        # チャットルームからの離脱メッセージを送信
         await self.channel_layer.group_send(
             self.group_name,
             {
@@ -88,11 +90,11 @@ class ChatConsumer(_BaseConsumer):
     async def post_disconnect(self, user):
         target = g_chat_clients.get(self.group_name, None)
 
-        # target is empty
+        # 参加者がいなくなった場合、辞書から削除
         if target is not None and len(target) == 0:
             del g_chat_clients[self.group_name]
 
-    # Send message by system on connection or disconnection
+    # システムメッセージの送信
     async def send_system_message(self, event):
         try:
             room_name = str(self.room)
@@ -125,7 +127,7 @@ class ChatConsumer(_BaseConsumer):
         except Exception as err:
             raise Exception(err)
 
-    # Receive message from WebSocket
+    # WebSocketからメッセージを受信
     async def receive_json(self, content):
         try:
             user = self.scope["user"]
@@ -143,6 +145,7 @@ class ChatConsumer(_BaseConsumer):
         except Exception as err:
             raise Exception(err)
 
+    # チャットメッセージの送信
     async def send_chat_message(self, event):
         try:
             msg_type = event["msg_type"]
@@ -160,6 +163,7 @@ class ChatConsumer(_BaseConsumer):
         except Exception as err:
             raise Exception(err)
 
+    # メッセージをデータベースに保存
     @database_sync_to_async
     def create_message(self, user, message):
         try:
@@ -235,6 +239,7 @@ class AI:
             "meta/llama-2-70b-chat:02e509c789964a7ea8736978a43525956ef40397be9033abf9fd2badfe68c9e3",
             input={"prompt": self.prompt, "system_prompt": self.prompt},
         )
-
+        s = ""
         for item in output:
-            print(item, end="")
+            s += item
+        return s
