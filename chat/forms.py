@@ -26,24 +26,16 @@ class SearchForm(forms.Form):
 class RoomForm(forms.ModelForm):
     class Meta:
         model = models.Room
-        fields = ('name', 'description', 'participants')
+        fields = ('name','ai_Tag')
         widgets = {
             'name': forms.TextInput(attrs={
                 'placeholder': gettext_lazy('Enter the room name.'),
                 'class': 'form-control',
             }),
-            'description': forms.Textarea(attrs={
-                'rows': 5,
-                'cols': 10,
-                'style': 'resize: none',
-                'placeholder': gettext_lazy('Enter the description.'),
-                'class': 'form-control',
+            'ai_Tag': forms.CheckboxSelectMultiple(attrs={
+                'class': 'form-check-input',
+                'type': 'checkbox'
             }),
-            'participants': forms.SelectMultiple(attrs={
-                'class': 'form-control',
-            }),
+
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['participants'].queryset = User.objects.filter(is_staff=False)

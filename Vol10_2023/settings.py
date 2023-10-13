@@ -140,6 +140,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_REDIRECT_URL = '/chat'
 
 # channel layerの設定（今回は、Redisの代わりにInMemoryを利用する）
 CHANNEL_LAYERS = {
@@ -147,5 +148,3 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
-
-LOGIN_REDIRECT_URL="/"
