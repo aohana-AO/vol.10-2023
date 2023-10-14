@@ -8,8 +8,26 @@
 
             <div class="form-row">
                 <div class="col-12">
-                    {{ form.name }}
-                    {{ form.ai_Tag }}
+                 <div>
+                        {{ form.name.label_tag }}
+                        {{ form.name }}
+                    </div>
+                    <div>
+                        {{ form.ChatGPT }}
+                        {{ form.ChatGPT.label_tag }}
+                    </div>
+                    <div>
+                        {{ form.Claude2 }}
+                        {{ form.Claude2.label_tag }}
+                    </div>
+                    <div>
+                        {{ form.PaLM2 }}
+                        {{ form.PaLM2.label_tag }}
+                    </div>
+                    <div>
+                        {{ form.LLaMA }}
+                        {{ form.LLaMA.label_tag }}
+                    </div>
                     <!--ここはのちにフロントで修正-->
                     <br>
                     <br>

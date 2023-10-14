@@ -1,7 +1,10 @@
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 from datetime import datetime
 from . import models
+from django.contrib.auth.models import User  # DjangoのUserモデルをインポート
+import random
 
 import openai, environ, deepl, boto3, json, replicate
 import google.generativeai as palm
@@ -14,7 +17,7 @@ class _BaseConsumer(AsyncJsonWebsocketConsumer):
         super().__init__(*args, **kwargs)
 
     def get_current_time(self):
-        return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def get_client_key(self, user):
         return f"user{user.pk}"
@@ -57,11 +60,13 @@ class _BaseConsumer(AsyncJsonWebsocketConsumer):
 # global instance for chat
 g_chat_clients = {}
 
+
 # ChatConsumerクラス: チャット用のWebSocketコンシューマー
 class ChatConsumer(_BaseConsumer):
     def __init__(self, *args, **kwargs):
         kwargs["prefix"] = "chat-room"
         super().__init__(*args, **kwargs)
+        self.ai = AI()
 
     async def post_accept(self, user):
         # チャットルームへの参加メッセージを送信
@@ -142,6 +147,61 @@ class ChatConsumer(_BaseConsumer):
                     "message": message,
                 },
             )
+
+            # ----------------- この辺からAI返信部分 ----------------#
+
+            # ユーザー会得
+            @sync_to_async
+            def get_chatgpt_user(ainame):
+                try:
+                    chatgpt_user = User.objects.get(username=ainame)
+                    return chatgpt_user
+                except User.DoesNotExist:
+                    return None
+
+            # aiメッセージ送信&保存
+            async def ai_Message(AI_name):
+                # AIが送信するメッセージ内容
+                if AI_name == "chatGPT":
+                    AI_Message = self.ai.ChatGPT(User_message=message)
+                elif AI_name == "Claude2":
+                    AI_Message = self.ai.Claude(User_message=message)
+                elif AI_name == "PaLM2":
+                    AI_Message = self.ai.Palm2(User_message=message)
+                else:
+                    AI_Message = self.ai.Llama(User_message=message)
+                # AIのユーザー情報
+                AI_user = await get_chatgpt_user(AI_name)
+
+                # DBに保存
+                await self.create_message(AI_user, AI_Message)
+
+                # 送信
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type": "send_chat_message",
+                        "msg_type": "user_message",
+                        "username": str(AI_user),
+                        "message": AI_Message,
+                    },
+                )
+
+            ai_choices = [
+                (self.room.ChatGPT, "chatGPT"),
+                (self.room.Claude2, "Claude2"),
+                (self.room.PaLM2, "PaLM2"),
+                (self.room.LLaMA, "LLaMA"),
+            ]
+            # ランダムな順序でAIを処理するためにリストをシャッフル
+            random.shuffle(ai_choices)
+
+            # シャッフルされた順序でAIを処理
+            for ai_selected, ai_name in ai_choices:
+                if ai_selected:
+                    print(f"{ai_name} is selected")
+                    await ai_Message(ai_name)
+
         except Exception as err:
             raise Exception(err)
 
@@ -186,34 +246,26 @@ class AI:
         self.bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
         palm.configure(api_key=env("PALM_API_KEY"))
 
-        self.User_message = "Hello"
-        self.prompt = "Hello"
-
-    def ChatGPT(self):
-        input_text = self.translator.translate_text(
-            self.User_message, source_lang="JA", target_lang="EN-US"
-        )
+    def ChatGPT(self, User_message):
+        input_text = self.JAtoEN(User_message)
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": self.prompt},
                 {"role": "user", "content": input_text},
             ],
         )
 
-        output_text = self.translator.translate_text(
-            response["choices"][0]["message"]["content"],
-            source_lang="JA",
-            target_lang="EN-US",
-        )
+        output_text = self.ENtoJA(response["choices"][0]["message"]["content"])
 
         return output_text
 
-    def Claude(self):
+    def Claude(self, User_message):
+        input_text = self.JAtoEN(User_message)
+
         body = json.dumps(
             {
-                "prompt": self.prompt,
+                "prompt": f"Human: {input_text} Assistant:",
                 "max_tokens_to_sample": 500,
             }
         )
@@ -226,20 +278,49 @@ class AI:
         )
 
         answer = resp["body"].read().decode()
-        output_text = json.loads(answer)["completion"]
+        output_text = self.ENtoJA(json.loads(answer)["completion"])
 
         return output_text
 
-    def Palm2(self):
-        response = palm.chat(messages=self.prompt)
-        return response.last
+    def Palm2(self, User_message):
+        input_text = self.JAtoEN(User_message)
 
-    def Llama(self):
+        response = palm.chat(messages=input_text)
+
+        output_text = self.ENtoJA(response.last)
+
+        return output_text
+
+    def Llama(self, User_message):
+        input_text = self.JAtoEN(User_message)
+
         output = replicate.run(
             "meta/llama-2-70b-chat:02e509c789964a7ea8736978a43525956ef40397be9033abf9fd2badfe68c9e3",
-            input={"prompt": self.prompt, "system_prompt": self.prompt},
+            input={"prompt": input_text},
         )
+
         s = ""
         for item in output:
             s += item
-        return s
+
+        output_text = self.ENtoJA(s)
+
+        return output_text
+
+    def JAtoEN(self, input_text):
+        output_text = str(
+            self.translator.translate_text(
+                input_text, source_lang="JA", target_lang="EN-US"
+            )
+        )
+        return output_text
+
+    def ENtoJA(self, input_text):
+        output_text = str(
+            self.translator.translate_text(
+                input_text,
+                source_lang="EN",
+                target_lang="JA",
+            )
+        )
+        return output_text
