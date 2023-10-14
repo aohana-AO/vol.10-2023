@@ -13,15 +13,13 @@ pip install -r requirements.txt
 ```
 
 #### ③データベースのマイグレート
+マイグレーションファイルを作成。modelsに変更がなければNo changes detectedとなるかも
 ```
-#マイグレーションファイルを作成。modelsに変更がなければNo changes detectedとなるかも
-
 python manage.py makemigrations
 ```
 
+マイグレーションファイルをデータベースに適用
 ```
-#マイグレーションファイルをデータベースに適用
-
 python manage.py migrate
 ```
 
