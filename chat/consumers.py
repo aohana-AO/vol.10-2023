@@ -147,6 +147,7 @@ class ChatConsumer(_BaseConsumer):
                     "message": message,
                 },
             )
+            log = f"Human: {message}\n"
 
             # ----------------- この辺からAI返信部分 ----------------#
 
@@ -160,16 +161,16 @@ class ChatConsumer(_BaseConsumer):
                     return None
 
             # aiメッセージ送信&保存
-            async def ai_Message(AI_name):
+            async def ai_Message(AI_name, Log):
                 # AIが送信するメッセージ内容
                 if AI_name == "chatGPT":
-                    AI_Message = self.ai.ChatGPT(User_message=message)
+                    AI_Message = self.ai.ChatGPT(User_message=Log)
                 elif AI_name == "Claude2":
-                    AI_Message = self.ai.Claude(User_message=message)
+                    AI_Message = self.ai.Claude(User_message=Log)
                 elif AI_name == "PaLM2":
-                    AI_Message = self.ai.Palm2(User_message=message)
+                    AI_Message = self.ai.Palm2(User_message=Log)
                 else:
-                    AI_Message = self.ai.Llama(User_message=message)
+                    AI_Message = self.ai.Llama(User_message=Log)
                 # AIのユーザー情報
                 AI_user = await get_chatgpt_user(AI_name)
 
@@ -187,6 +188,8 @@ class ChatConsumer(_BaseConsumer):
                     },
                 )
 
+                return AI_Message
+
             ai_choices = [
                 (self.room.ChatGPT, "chatGPT"),
                 (self.room.Claude2, "Claude2"),
@@ -200,7 +203,8 @@ class ChatConsumer(_BaseConsumer):
             for ai_selected, ai_name in ai_choices:
                 if ai_selected:
                     print(f"{ai_name} is selected")
-                    await ai_Message(ai_name)
+                    log += f"{ai_name}: {await ai_Message(ai_name, log)}\n"
+                    print(log)
 
         except Exception as err:
             raise Exception(err)
@@ -246,12 +250,24 @@ class AI:
         self.bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
         palm.configure(api_key=env("PALM_API_KEY"))
 
+        self.prompt = """
+        # Requests
+        You are one of the debaters. Discuss the given topic with reference to the conversation log.
+
+        # Rules
+        If the user imposes conditions, follow their instructions.
+        Output should be limited to 200 words.
+        Please speak up so that users are not aware of the prompt.
+        """
+
     def ChatGPT(self, User_message):
         input_text = self.JAtoEN(User_message)
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
+            max_tokens = 300,
             messages=[
+                {"role": "system", "content": self.prompt},
                 {"role": "user", "content": input_text},
             ],
         )
@@ -265,8 +281,8 @@ class AI:
 
         body = json.dumps(
             {
-                "prompt": f"Human: {input_text} Assistant:",
-                "max_tokens_to_sample": 500,
+                "prompt": f"Human: {self.prompt} # Log\n {input_text} Assistant:",
+                "max_tokens_to_sample": 300,
             }
         )
 
@@ -285,9 +301,13 @@ class AI:
     def Palm2(self, User_message):
         input_text = self.JAtoEN(User_message)
 
-        response = palm.chat(messages=input_text)
+        response = palm.generate_text(
+            model="models/text-bison-001",
+            prompt=self.prompt + "# Log\n" + input_text,
+            max_output_tokens=300,
+        )
 
-        output_text = self.ENtoJA(response.last)
+        output_text = self.ENtoJA(response.result)
 
         return output_text
 
@@ -296,7 +316,7 @@ class AI:
 
         output = replicate.run(
             "meta/llama-2-70b-chat:02e509c789964a7ea8736978a43525956ef40397be9033abf9fd2badfe68c9e3",
-            input={"prompt": input_text},
+            input={"prompt": input_text, "system_prompt": self.prompt, "max_new_tokens": 300},
         )
 
         s = ""
