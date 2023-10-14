@@ -8,3 +8,8 @@ channels-redis
 daphne
 typing-extensions
 sqlparse
+openai
+deepl
+boto3
+google-generativeai
+replicate
