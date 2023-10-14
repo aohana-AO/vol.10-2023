@@ -37,13 +37,19 @@ class ai_Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+
 # Roomモデルはチャットルームを表します
 class Room(models.Model):
     host = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(gettext_lazy('Room name'), max_length=64)
     created_at = models.DateTimeField(gettext_lazy('Created time'), default=timezone.now)
     participants = models.ManyToManyField(User, related_name='rooms', verbose_name=gettext_lazy('Participants'), blank=True)
-    ai_Tag = models.ManyToManyField(ai_Tag, related_name='rooms', verbose_name=gettext_lazy('ai_Tag'))
+    ChatGPT = models.BooleanField(default=False)
+    Claude2 = models.BooleanField(default=False)
+    PaLM2 = models.BooleanField(default=False)
+    LLaMA = models.BooleanField(default=False)
+
 
     # RoomQuerysetを使用してカスタムクエリを実行できるようにします
     objects = RoomQueryset.as_manager()

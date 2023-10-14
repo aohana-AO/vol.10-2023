@@ -26,13 +26,25 @@ class SearchForm(forms.Form):
 class RoomForm(forms.ModelForm):
     class Meta:
         model = models.Room
-        fields = ('name','ai_Tag')
+        fields = ('name','ChatGPT','Claude2','PaLM2','LLaMA')
         widgets = {
             'name': forms.TextInput(attrs={
                 'placeholder': gettext_lazy('Enter the room name.'),
                 'class': 'form-control',
             }),
-            'ai_Tag': forms.CheckboxSelectMultiple(attrs={
+            'ChatGPT': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'type': 'checkbox'
+            }),
+            'Claude2': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'type': 'checkbox'
+            }),
+            'PaLM2': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'type': 'checkbox'
+            }),
+            'LLaMA': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
                 'type': 'checkbox'
             }),

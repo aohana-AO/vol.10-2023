@@ -1,7 +1,10 @@
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 from datetime import datetime
 from . import models
+from django.contrib.auth.models import User  # DjangoのUserモデルをインポート
+import random
 
 # _BaseConsumerクラス: WebSocketの基本クラス
 class _BaseConsumer(AsyncJsonWebsocketConsumer):
@@ -55,6 +58,8 @@ g_chat_clients = {}
 
 # ChatConsumerクラス: チャット用のWebSocketコンシューマー
 class ChatConsumer(_BaseConsumer):
+
+
     def __init__(self, *args, **kwargs):
         kwargs['prefix'] = 'chat-room'
         super().__init__(*args, **kwargs)
@@ -119,6 +124,8 @@ class ChatConsumer(_BaseConsumer):
         except Exception as err:
             raise Exception(err)
 
+
+
     # WebSocketからメッセージを受信
     async def receive_json(self, content):
         try:
@@ -133,8 +140,63 @@ class ChatConsumer(_BaseConsumer):
                     'message': message,
                 }
             )
+
+
+            #----------------- この辺からAI返信部分 ----------------#
+
+            # ユーザー会得
+            @sync_to_async
+            def get_chatgpt_user(ainame):
+                try:
+                    chatgpt_user = User.objects.get(username=ainame)
+                    return chatgpt_user
+                except User.DoesNotExist:
+                    return None
+
+            #aiメッセージ送信&保存
+            async def ai_Message(AI_name):
+                # AIが送信するメッセージ内容
+                AI_Message = message + 'こんにちは。私は'+AI_name+'だよ'
+                # AIのユーザー情報
+                AI_user = await get_chatgpt_user(AI_name)
+
+                # DBに保存
+                await self.create_message(AI_user, AI_Message)
+
+                # 送信
+                await self.channel_layer.group_send(
+                    self.group_name, {
+                        'type': 'send_chat_message',
+                        'msg_type': 'user_message',
+                        'username': str(AI_user),
+                        'message': AI_Message,
+                    }
+                )
+
+
+
+            ai_choices = [
+                (self.room.ChatGPT, 'chatGPT'),
+                (self.room.Claude2, 'Claude2'),
+                (self.room.PaLM2, 'PaLM2'),
+                (self.room.LLaMA, 'LLaMA'),
+            ]
+            # ランダムな順序でAIを処理するためにリストをシャッフル
+            random.shuffle(ai_choices)
+
+            # シャッフルされた順序でAIを処理
+            for ai_selected, ai_name in ai_choices:
+                if ai_selected:
+                    print(f'{ai_name} is selected')
+                    await ai_Message(ai_name)
+
+
+
         except Exception as err:
             raise Exception(err)
+
+
+
 
     # チャットメッセージの送信
     async def send_chat_message(self, event):
