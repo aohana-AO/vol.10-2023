@@ -117,7 +117,7 @@
     }
 
     .menu li:first-child {
-        flex: 3;
+        flex: 1;
         /* Sets a flex-grow value of 3 for the first item */
     }
 
@@ -449,6 +449,12 @@
                 <li><a href="{% url 'chat:create_room' %}">+ New Room</a></li>
             </ul>
         </div>
+            <div class="nav_header">
+            <ul class="menu">
+                <li><a href="{% url 'chat:delete_room' room.pk %}">削除</a></li>
+                <li><a href="{% url 'chat:update_room' room.pk %}">更新</a></li>
+            </ul>
+        </div>
 
         <div class="inner">
             <ul class="member">
@@ -461,20 +467,26 @@
 
                 {% if room.ChatGPT %}
                     <li>chatGPT</li>
-                {% elif room.Claude2 %}
+                {% endif %}
+                {% if room.Claude2 %}
                     <li>Claude2</li>
-                {% elif room.LLaMA %}
+                {% endif %}
+                {% if room.LLaMA %}
                     <li>LLaMa</li>
-                {% elif room.PaLM2 %}
+                {% endif %}
+                {% if room.PaLM2 %}
                     <li>PALM2</li>
                 {% endif %}
+
             </ul>
             <ul class="display_room">
                 <!-- todo: 中央揃えにする -->
 
                 {% for monoroom in rooms %}
                     {% if monoroom.name == room.name %}
-                        <li style="background-color: #5c726e"><a href="{% url 'chat:enter_room' monoroom.pk %}">{{ monoroom.name }}</a></li>
+                        <li style="background-color: #5c726e"><a
+                                href="{% url 'chat:enter_room' monoroom.pk %}">{{ monoroom.name }}</a>
+                        </li>
                     {% else %}
                         <li><a href="{% url 'chat:enter_room' monoroom.pk %}">{{ monoroom.name }}</a></li>
                     {% endif %}
@@ -482,8 +494,12 @@
             </ul>
         </div>
 
-        <div class="nav_footter">
-            　　【 UserNme：{{ user.username }} 】
+        <div class="nav_footter" style="margin-left: 3%">
+            <p style="text-align: center">【 UserNme：{{ user.username }} 】</p>
+            <br>
+            <a href="{% url 'accounts:logout' %}" class="btn btn-outline-primary cancel-button"
+               style="color: #9EC3BC;border-color: #9EC3BC">log out</a>
+
         </div>
     </nav>
     <!--  -->
@@ -537,7 +553,7 @@
                             <p>{{ message.owner|stringformat:"s" }}</p>
                         </div>
                         <!-- .message-icon -->
-                        <p class="message-text4 p-2 ms-2 mb-0 bg-your-color">
+                        <p class="message-text3 p-2 ms-2 mb-0 bg-your-color">
                             {{ message.content|linebreaksbr }}
                             <br>
                             <time style="font-size: 0.3rem;" class="card-datetime"
@@ -548,7 +564,7 @@
                         <!-- .message-text -->
                     </div>
 
-                {% elif message.owner|stringformat:"s" == "LLaMa" %}
+                {% elif message.owner|stringformat:"s" == "LLaMA" %}
                     <!-- .message -->
                     <div class="message d-flex flex-row align-items-start mb-4">
                         <div class="icon">
@@ -558,7 +574,7 @@
                             <p>{{ message.owner|stringformat:"s" }}</p>
                         </div>
                         <!-- .message-icon -->
-                        <p class="message-text4 p-2 ms-2 mb-0 bg-your-color">
+                        <p class="message-text2 p-2 ms-2 mb-0 bg-your-color">
                             {{ message.content|linebreaksbr }}
                             <br>
                             <time style="font-size: 0.3rem;" class="card-datetime"
@@ -568,16 +584,16 @@
                         </p>
                         <!-- .message-text -->
                     </div>
-                {% elif message.owner|stringformat:"s" == "PALM2" %}
+                {% elif message.owner|stringformat:"s" == "PaLM2" %}
                     <div class="message d-flex flex-row align-items-start mb-4">
                         <div class="icon">
                             <div class="message-icon1 rounded bg-your-color text-white fs-3">
                                 <i class="fas fa-user"></i>
                             </div>
-                            <p>message.owner|stringformat:"s"</p>
+                            <p>{{ message.owner|stringformat:"s" }}</p>
                         </div>
                         <!-- .message-icon -->
-                        <p class="message-text4 p-2 ms-2 mb-0 bg-your-color">
+                        <p class="message-text1 p-2 ms-2 mb-0 bg-your-color">
                             {{ message.content|linebreaksbr }}
                             <br>
                             <time style="font-size: 0.3rem;" class="card-datetime"
