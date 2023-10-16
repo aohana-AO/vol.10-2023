@@ -13,15 +13,13 @@ pip install -r requirements.txt
 ```
 
 #### ③データベースのマイグレート
+マイグレーションファイルを作成。modelsに変更がなければNo changes detectedとなるかも
 ```
-#マイグレーションファイルを作成。modelsに変更がなければNo changes detectedとなるかも
-
 python manage.py makemigrations
 ```
 
+マイグレーションファイルをデータベースに適用
 ```
-#マイグレーションファイルをデータベースに適用
-
 python manage.py migrate
 ```
 
@@ -36,9 +34,23 @@ DjangoやAPIを使うとき、key(秘密の鍵)と言うものが必要になっ
 ↓
 チームから共有されたkeyをその中に貼り付け。
 
-#### ⑤以下のコマンドでサーバーを動かす
+
+#### ⑤スーパーユーザー作成
+```
+python manage.py createsuperuser --noinput --username superuser
+```
+
+#### ⑥以下のコマンドでサーバーを動かす
 ```
 python manage.py runserver
 ```
-以下の画面になればひとまず大丈夫
-![img.png](img.png)
+
+asgiでの立ち上げの場合
+```
+daphne -b 0.0.0.0 -p 8000 Vol10_2023.asgi:application
+```
+
+
+#### ⑦ローカルアクセス
+以下にアクセス
+http://127.0.0.1:8000/
